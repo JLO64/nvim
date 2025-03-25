@@ -11,28 +11,34 @@ vim.cmd([[
 ]])
 
 vim.api.nvim_create_user_command("CopyPath", function(context)
-  local full_path = vim.fn.glob("%:p")
-
+  local full_path = vim.fn.expand("%:p") -- Ensure to use absolute path here
   local file_path = nil
-  if context["args"] == "nameonly" then
-    file_path = vim.fn.fnamemodify(full_path, ":t")
-  end
 
-  -- get the file path relative to the project directory
-  if context["args"] == "relative" then
+  if not context["args"] then
     local relative_path = vim.fn.fnamemodify(vim.fn.expand("%"), ":~:.")
     file_path = relative_path
+  else
+    if context["args"] == "nameonly" then
+      file_path = vim.fn.fnamemodify(full_path, ":t")
+    elseif context["args"] == "absolute" then
+      file_path = full_path
+    else
+      local relative_path = vim.fn.fnamemodify(vim.fn.expand("%"), ":~:.")
+      file_path = relative_path
+    end
   end
 
-  if context["args"] == "absolute" then
-    file_path = full_path
+  if type(file_path) ~= "string" then
+    -- print an error
+    vim.print("Failed to get file path")
+    return
   end
 
   vim.fn.setreg("+", file_path)
   vim.print("Filepath copied to clipboard!")
 end, {
   bang = false,
-  nargs = 1,
+  nargs = "*", -- Allow zero or more arguments
   force = true,
   desc = "Copy current file path to clipboard",
   complete = function()
