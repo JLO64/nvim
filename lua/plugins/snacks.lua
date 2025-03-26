@@ -35,6 +35,7 @@ local header_3 = [[
 ]]
 local header_4 = [[
 
+
 ███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗
 ████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║
 ██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║
@@ -69,15 +70,30 @@ return {
         },
         sections = {
           {
-            { section = "header", height = 10 },
+            -- { section = "header", height = 10 },
+            {
+              section = "terminal",
+              cmd = "viu ~/.config/nvim/neovim-mark-flat.png -t -h 13",
+              height = 15,
+              indent = 20,
+              padding = 1,
+              -- ttl = 10,
+            },
             { icon = " ", title = "Keymaps", section = "keys", indent = 2, padding = 1, gap = 1 },
             { section = "startup" },
           },
           {
             pane = 2,
             padding = 1,
-            { icon = " ", title = "Projects", section = "projects", indent = 2, padding = 6, gap = 1 },
-            { icon = " ", title = "Recent Files", section = "recent_files", indent = 2, gap = 1 },
+            { icon = " ", title = "Git Repositories", section = "projects", indent = 2, padding = 10, gap = 1 },
+            { icon = " ", title = "Recent Files", section = "recent_files", indent = 2, gap = 1, padding = 1 },
+            {
+              section = "terminal",
+              cmd = "~/.config/nvim/dashboard_status.sh",
+              height = 1,
+              indent = 9,
+              ttl = 10,
+            },
           },
         },
       },
