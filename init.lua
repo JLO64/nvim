@@ -45,3 +45,17 @@ end, {
     return { "nameonly", "relative", "absolute" }
   end,
 })
+
+vim.api.nvim_create_user_command("FormatJSON", function()
+  vim.cmd([[:%!jq .]])
+end, {})
+
+require("conform").setup({
+  formatters_by_ft = {
+    html = { "prettierd", "prettier", stop_after_first = true },
+    htmldjango = { "prettierd", "prettier", stop_after_first = true },
+    markdown = { "prettierd", "prettier", stop_after_first = true },
+    python = { "black" },
+    json = { "jq" },
+  },
+})

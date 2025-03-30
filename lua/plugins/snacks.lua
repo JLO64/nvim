@@ -48,6 +48,19 @@ return {
   {
     "snacks.nvim",
     opts = {
+      picker = {
+        hidden = true,
+        ignored = true,
+        sources = {
+          files = {
+            hidden = true,
+            ignored = true,
+            include = {
+              "*.json",
+            },
+          },
+        },
+      },
       dashboard = {
         preset = {
           pick = function(cmd, opts)
