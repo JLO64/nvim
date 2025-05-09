@@ -55,7 +55,30 @@ require("conform").setup({
     html = { "prettierd", "prettier", stop_after_first = true },
     htmldjango = { "prettierd", "prettier", stop_after_first = true },
     markdown = { "prettierd", "prettier", stop_after_first = true },
-    python = { "black" },
+    -- python = { "black" },
     json = { "jq" },
+  },
+})
+
+require("lspconfig").ruff.setup({
+  init_options = {
+    settings = {
+      -- Ruff language server settings go here
+    },
+  },
+})
+
+require("lspconfig").pyright.setup({
+  settings = {
+    pyright = {
+      -- Using Ruff's import organizer
+      disableOrganizeImports = true,
+    },
+    python = {
+      analysis = {
+        -- Ignore all files for analysis to exclusively use Ruff for linting
+        ignore = { "*" },
+      },
+    },
   },
 })
