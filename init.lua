@@ -131,31 +131,57 @@ vim.api.nvim_create_user_command("Whisper", function(opts)
   )
   local cleanup_cmd = string.format("rm -f %s %s", temp_wav, temp_txt)
 
+  -- Set statusline to show recording status with countdown
+  local remaining = duration
+  local timer = vim.fn.timer_start(1000, function()
+    remaining = remaining - 1
+    if remaining > 0 then
+      vim.o.statusline = "🎤 Recording... " .. remaining .. " seconds remaining"
+      vim.cmd("redraw")
+    end
+  end, { ["repeat"] = duration })
+  
+  vim.o.statusline = "🎤 Recording... " .. remaining .. " seconds remaining"
+  vim.cmd("redraw")
+  vim.fn.system("sleep 3")
   vim.fn.system(record_cmd)
+  vim.fn.timer_stop(timer)
   if vim.v.shell_error ~= 0 then
     vim.fn.system(cleanup_cmd)
-    vim.print("Transcription failed")
+    vim.o.statusline = "❌ Recording failed"
+    vim.defer_fn(function() vim.o.statusline = "" end, 3000)
     return
   end
 
+  -- Update statusline to show transcription in progress
+  vim.o.statusline = "🔄 Transcribing audio..."
+  vim.cmd("redraw")
   vim.fn.system(whisper_cmd)
   if vim.v.shell_error ~= 0 then
     vim.fn.system(cleanup_cmd)
-    vim.print("Transcription failed")
+    vim.o.statusline = "❌ Transcription failed"
+    vim.defer_fn(function() vim.o.statusline = "" end, 3000)
     return
   end
 
   local transcription = vim.fn.system("cat " .. temp_txt)
   if vim.v.shell_error ~= 0 then
     vim.fn.system(cleanup_cmd)
-    vim.print("Transcription failed")
+    vim.o.statusline = "❌ Transcription failed"
+    vim.defer_fn(function() vim.o.statusline = "" end, 3000)
     return
   end
 
   transcription = transcription:gsub("^%s*(.-)%s*$", "%1")
   vim.fn.setreg("+", transcription)
   vim.fn.system(cleanup_cmd)
-  vim.print("Transcription copied to clipboard!")
+  
+  -- Update statusline to show completion and restore after 3 seconds
+  vim.o.statusline = "✅ Transcription copied to clipboard!"
+  vim.cmd("redraw")
+  vim.defer_fn(function()
+    vim.o.statusline = ""
+  end, 3000)
 end, {
   bang = false,
   nargs = "?",
