@@ -119,6 +119,50 @@ vim.api.nvim_create_user_command("FormatJSON", function()
   vim.cmd([[:%!jq .]])
 end, {})
 
+vim.api.nvim_create_user_command("Whisper", function(opts)
+  local duration = opts.args and tonumber(opts.args) or 30
+  local temp_wav = "/tmp/temp_whisper.wav"
+  local temp_txt = "/tmp/temp_whisper.txt"
+
+  local record_cmd = string.format("sox -d %s trim 0 %d", temp_wav, duration)
+  local whisper_cmd = string.format(
+    "whisper %s --model large-v3-turbo --language en --fp16 False --output_format txt --output_dir /tmp",
+    temp_wav
+  )
+  local cleanup_cmd = string.format("rm -f %s %s", temp_wav, temp_txt)
+
+  vim.fn.system(record_cmd)
+  if vim.v.shell_error ~= 0 then
+    vim.fn.system(cleanup_cmd)
+    vim.print("Transcription failed")
+    return
+  end
+
+  vim.fn.system(whisper_cmd)
+  if vim.v.shell_error ~= 0 then
+    vim.fn.system(cleanup_cmd)
+    vim.print("Transcription failed")
+    return
+  end
+
+  local transcription = vim.fn.system("cat " .. temp_txt)
+  if vim.v.shell_error ~= 0 then
+    vim.fn.system(cleanup_cmd)
+    vim.print("Transcription failed")
+    return
+  end
+
+  transcription = transcription:gsub("^%s*(.-)%s*$", "%1")
+  vim.fn.setreg("+", transcription)
+  vim.fn.system(cleanup_cmd)
+  vim.print("Transcription copied to clipboard!")
+end, {
+  bang = false,
+  nargs = "?",
+  force = true,
+  desc = "Record audio and transcribe to clipboard (default 30s, specify duration as argument)",
+})
+
 require("conform").setup({
   formatters_by_ft = {
     html = { "prettierd", "prettier", stop_after_first = true },
