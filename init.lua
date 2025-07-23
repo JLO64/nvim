@@ -119,8 +119,8 @@ vim.api.nvim_create_user_command("FormatJSON", function()
   vim.cmd([[:%!jq .]])
 end, {})
 
-vim.api.nvim_create_user_command("Whisper", function(opts)
-  local duration = opts.args and tonumber(opts.args) or 30
+vim.api.nvim_create_user_command("Voice", function(opts)
+  local duration = opts.args and tonumber(opts.args) or 15
   local temp_wav = "/tmp/temp_whisper.wav"
   local temp_txt = "/tmp/temp_whisper.txt"
 
@@ -131,62 +131,76 @@ vim.api.nvim_create_user_command("Whisper", function(opts)
   )
   local cleanup_cmd = string.format("rm -f %s %s", temp_wav, temp_txt)
 
-  -- Set statusline to show recording status with countdown
+  -- Set global variable for lualine to display
   local remaining = duration
+  _G.whisper_status = "🎤 Recording... " .. remaining .. " seconds remaining"
+
+  -- 3 second delay before recording
+  vim.fn.system("sleep 3")
+
+  -- Start countdown timer and recording asynchronously
   local timer = vim.fn.timer_start(1000, function()
     remaining = remaining - 1
     if remaining > 0 then
-      vim.o.statusline = "🎤 Recording... " .. remaining .. " seconds remaining"
-      vim.cmd("redraw")
+      _G.whisper_status = "🎤 Recording... " .. remaining .. " seconds remaining"
+    else
+      _G.whisper_status = "🔄 Transcribing audio..."
     end
   end, { ["repeat"] = duration })
-  
-  vim.o.statusline = "🎤 Recording... " .. remaining .. " seconds remaining"
-  vim.cmd("redraw")
-  vim.fn.system("sleep 3")
-  vim.fn.system(record_cmd)
-  vim.fn.timer_stop(timer)
-  if vim.v.shell_error ~= 0 then
-    vim.fn.system(cleanup_cmd)
-    vim.o.statusline = "❌ Recording failed"
-    vim.defer_fn(function() vim.o.statusline = "" end, 3000)
-    return
-  end
 
-  -- Update statusline to show transcription in progress
-  vim.o.statusline = "🔄 Transcribing audio..."
-  vim.cmd("redraw")
-  vim.fn.system(whisper_cmd)
-  if vim.v.shell_error ~= 0 then
-    vim.fn.system(cleanup_cmd)
-    vim.o.statusline = "❌ Transcription failed"
-    vim.defer_fn(function() vim.o.statusline = "" end, 3000)
-    return
-  end
+  vim.fn.jobstart(record_cmd, {
+    on_exit = function(_, exit_code)
+      vim.fn.timer_stop(timer)
+      if exit_code ~= 0 then
+        vim.fn.system(cleanup_cmd)
+        _G.whisper_status = "❌ Recording failed"
+        vim.defer_fn(function()
+          _G.whisper_status = nil
+        end, 3000)
+        return
+      end
 
-  local transcription = vim.fn.system("cat " .. temp_txt)
-  if vim.v.shell_error ~= 0 then
-    vim.fn.system(cleanup_cmd)
-    vim.o.statusline = "❌ Transcription failed"
-    vim.defer_fn(function() vim.o.statusline = "" end, 3000)
-    return
-  end
+      -- Continue with transcription
+      vim.schedule(function()
+        _G.whisper_status = "🔄 Transcribing audio..."
 
-  transcription = transcription:gsub("^%s*(.-)%s*$", "%1")
-  vim.fn.setreg("+", transcription)
-  vim.fn.system(cleanup_cmd)
-  
-  -- Update statusline to show completion and restore after 3 seconds
-  vim.o.statusline = "✅ Transcription copied to clipboard!"
-  vim.cmd("redraw")
-  vim.defer_fn(function()
-    vim.o.statusline = ""
-  end, 3000)
+        vim.fn.jobstart(whisper_cmd, {
+          on_exit = function(_, whisper_exit_code)
+            if whisper_exit_code ~= 0 then
+              vim.fn.system(cleanup_cmd)
+              _G.whisper_status = "❌ Transcription failed"
+              vim.defer_fn(function()
+                _G.whisper_status = nil
+              end, 3000)
+              return
+            end
+
+            local transcription = vim.fn.system("cat " .. temp_txt)
+            if vim.v.shell_error ~= 0 then
+              vim.fn.system(cleanup_cmd)
+              _G.whisper_status = "❌ Transcription failed"
+              vim.defer_fn(function()
+                _G.whisper_status = nil
+              end, 3000)
+              return
+            end
+
+            transcription = transcription:gsub("^%s*(.-)%s*$", "%1")
+            vim.fn.setreg("+", transcription)
+            vim.fn.system(cleanup_cmd)
+
+            _G.whisper_status = nil
+            vim.print("Transcription copied to clipboard!")
+          end,
+        })
+      end)
+    end,
+  })
 end, {
   bang = false,
   nargs = "?",
   force = true,
-  desc = "Record audio and transcribe to clipboard (default 30s, specify duration as argument)",
+  desc = "Record audio and transcribe to clipboard (default 15s, specify duration as argument)",
 })
 
 require("conform").setup({
