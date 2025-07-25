@@ -56,15 +56,15 @@ return {
             { icon = " ", title = "Recent Files", section = "recent_files", indent = 2, gap = 1, padding = 1 },
             {
               section = "terminal",
-              cmd = "~/.config/nvim/dashboard_status.sh",
               height = 1,
-              indent = 9,
+              cmd = "~/.config/nvim/ccusage_status.sh",
+              indent = 1,
               padding = 1,
               ttl = 10,
             },
             {
               section = "terminal",
-              cmd = "~/.config/nvim/ccusage_status.sh",
+              cmd = "~/.config/nvim/dashboard_status.sh",
               height = 1,
               indent = 9,
               ttl = 10,
