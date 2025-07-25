@@ -28,7 +28,7 @@ format_tokens() {
   if [ "$tokens" -ge 1000000 ]; then
     echo "$(echo "scale=1; $tokens / 1000000" | bc)M"
   elif [ "$tokens" -ge 1000 ]; then
-    echo "$(echo "scale=1; $tokens / 1000" | bc)K"
+    echo "$(echo "scale=0; $tokens / 1000" | bc)K"
   else
     echo "$tokens"
   fi
@@ -39,10 +39,10 @@ current_tokens_formatted=$(format_tokens $total_tokens)
 # Calculate end time by adding remaining minutes to current time
 current_epoch=$(date +%s)
 end_epoch=$((current_epoch + remaining_minutes * 60))
-formatted_time=$(date -r "$end_epoch" "+%-I:%M %p")
+formatted_time=$(date -r "$end_epoch" "+%-I %p")
 
 # Output the formatted line
-printf "Claude Usage | Tokens: %s/%s | Time: %d minutes (%s)" \
+printf "Claude Usage | Tokens: %s/%s | Time: %d Minutes (%s)" \
   "$current_tokens_formatted" \
   "5M" \
   "$remaining_minutes" \
