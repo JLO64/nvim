@@ -12,7 +12,7 @@ fi
 active_block=$(echo "$json_output" | jq -r '.blocks[] | select(.isActive == true)')
 
 if [ -z "$active_block" ]; then
-  printf "Claude Usage | No active session"
+  printf "           Claude Usage | No active session"
   exit 0
 fi
 
