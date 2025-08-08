@@ -44,6 +44,6 @@ formatted_time=$(date -r "$end_epoch" "+%-I %p")
 # Output the formatted line
 printf "Claude Usage | Tokens: %s/%s | Time: %d Minutes (%s)" \
   "$current_tokens_formatted" \
-  "5M" \
+  "6M" \
   "$remaining_minutes" \
   "$formatted_time"
