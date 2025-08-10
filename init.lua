@@ -125,10 +125,8 @@ vim.api.nvim_create_user_command("Voice", function(opts)
   local temp_txt = "/tmp/temp_whisper.txt"
 
   local record_cmd = string.format("sox -d %s trim 0 %d", temp_wav, duration)
-  local whisper_cmd = string.format(
-    "whisper %s --model large-v3-turbo --language en --fp16 False --output_format txt --output_dir /tmp",
-    temp_wav
-  )
+  local whisper_cmd =
+    string.format("whisper %s --model small --language en --fp16 False --output_format txt --output_dir /tmp", temp_wav)
   local cleanup_cmd = string.format("rm -f %s %s", temp_wav, temp_txt)
 
   -- Set global variable for lualine to display
