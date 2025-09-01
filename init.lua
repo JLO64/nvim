@@ -129,13 +129,14 @@ require("conform").setup({
   },
 })
 
-require("lspconfig").ruff.setup({
+vim.lsp.config("ruff", {
   init_options = {
     settings = {
-      -- Ruff language server settings go here
+      -- Server settings should go here
     },
   },
 })
+vim.lsp.enable("ruff")
 
 require("lspconfig").pyright.setup({
   settings = {
