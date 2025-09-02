@@ -6,7 +6,13 @@ if [ $(docker info 2>&1 | wc -c) -lt 2000 ]; then
   tput sgr0
 else printf "     Docker"; fi
 printf " | "
-if curl -s --max-time 5 -H "Authorization: Bearer $OPENROUTER_API_KEY" https://openrouter.ai/api/v1/credits 2>/dev/null | grep -q '"total_credits"'; then printf "OpenRouter"; else
+response=$(curl -s --max-time 5 -H "Authorization: Bearer $OPENROUTER_API_KEY" https://openrouter.ai/api/v1/credits 2>/dev/null)
+credits=$(echo "$response" | jq -r '.data.total_credits')
+usage=$(echo "$response" | jq -r '.data.total_usage')
+if [ "$credits" != "null" ] && [ "$usage" != "null" ]; then
+  remaining=$(echo "$credits - $usage" | bc -l)
+  printf "OpenRouter ($%.2f)" "$remaining"
+else
   tput setaf 1
   printf "OpenRouter"
   tput sgr0
