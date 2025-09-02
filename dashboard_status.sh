@@ -1,10 +1,13 @@
 #!/bin/bash
 
-if [ $(docker info 2>&1 | wc -c) -lt 2000 ]; then
+if curl -s --unix-socket /var/run/docker.sock http/_ping 2>&1 >/dev/null; then
+  printf "     Docker"
+else
   tput setaf 1
   printf "     Docker"
   tput sgr0
-else printf "     Docker"; fi
+fi
+
 printf " | "
 response=$(curl -s --max-time 5 -H "Authorization: Bearer $OPENROUTER_API_KEY" https://openrouter.ai/api/v1/credits 2>/dev/null)
 credits=$(echo "$response" | jq -r '.data.total_credits')
@@ -18,8 +21,11 @@ else
   tput sgr0
 fi
 printf " | "
-if [ $(curl -s https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY" 2>/dev/null | wc -c) -gt 4000 ]; then printf "OpenAI API"; else
+response=$(curl -s --max-time 5 http://localhost:1234/v1/models 2>/dev/null)
+if echo "$response" | grep -q '"object": "list"'; then
+  printf "LM Studio"
+else
   tput setaf 1
-  printf "OpenAI API"
+  printf "LM Studio"
   tput sgr0
 fi
